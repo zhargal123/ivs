@@ -1,0 +1,30 @@
+% КЛАССИФИКАЦИЯ: здоров или болен?
+
+% ПРАВИЛО 1: если температура меньше 37, то человек здоров
+zdorov(Temperature) :-
+    Temperature < 37.
+
+% ПРАВИЛО 2: если температура 37 или выше, то человек болен
+bolen(Temperature) :-
+    Temperature >= 37.
+
+% ПРОВЕРКА ДЛЯ ОДНОГО ЧЕЛОВЕКА
+proverka(Temperature) :-
+    zdorov(Temperature),
+    write('Здоров'), nl.
+proverka(Temperature) :-
+    bolen(Temperature),
+    write('Болен'), nl.
+
+% ПРОВЕРКА НЕСКОЛЬКИХ ПАЦИЕНТОВ
+vse :-
+    write('Пациент 1 (36.5): '), proverka(36.5),
+    write('Пациент 2 (37.0): '), proverka(37.0),
+    write('Пациент 3 (38.2): '), proverka(38.2).
+% ? ЗАПРОСЫ
+% ?- zdorov(36.5).  
+% ?- zdorov(37.5).        
+% ?- bolen(38.0).         
+% ?- proverka(36.0).      
+% ?- proverka(39.0).     
+% ?- vse.                 

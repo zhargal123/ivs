@@ -1,0 +1,11 @@
+even(X) :-
+    X mod 2 =:= 0.
+filter_even([], []).
+filter_even([Head|Tail], [Head|NewTail]) :-
+    even(Head),                    % если голова четная
+    filter_even(Tail, NewTail).    % рекурсивно обрабатываем хвост
+filter_even([Head|Tail], NewList) :-
+    \+ even(Head),                 % если голова НЕ четная
+    filter_even(Tail, NewList).    % просто пропускаем её
+% ЗАПРОС
+% filter_even([1, 2, 3, 4, 5, 6, 7, 8], Result).

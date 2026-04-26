@@ -1,0 +1,27 @@
+% ФАКТЫ
+dog(flash).
+dog(rover).
+cat(butsy).
+horse(star).
+
+color(flash, black).
+color(rover, red).
+color(butsy, brown).
+color(star, white).
+
+% ВЛАДЕЛЬЦЫ
+owns(tom, rover).
+owns(kate, star).
+owns(kate, flash).
+
+% ПРАВИЛА
+animal(X) :- dog(X).
+animal(X) :- cat(X).
+animal(X) :- horse(X).
+
+owner_of(Animal, Owner) :- owns(Owner, Animal).
+% ЗАПРОСЫ
+% 1. color(rover, red).
+% 2. dog(X).
+% 3. owns(X, rover).
+% 4. owns(Owner, Animal), animal(Animal), color(Animal, Color), Color \= white.

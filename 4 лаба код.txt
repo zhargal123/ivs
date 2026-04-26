@@ -1,0 +1,281 @@
+;; ============================================
+;; Экспертная система: "Диагностика проблем со сном"
+;; ============================================
+
+(deftemplate answer (slot qname) (slot value))
+(deftemplate result (slot type) (slot description) (slot advice))
+
+;; ============================================
+;; ВОПРОСЫ
+;; ============================================
+
+(defrule ask-time-to-fall-asleep
+   (not (answer (qname fall_asleep)))
+   =>
+   (printout t crlf "****************************************" crlf)
+   (printout t "*     ДИАГНОСТИКА ПРОБЛЕМ СО СНОМ      *" crlf)
+   (printout t "****************************************" crlf crlf)
+   (printout t "Сколько времени обычно нужно, чтобы заснуть?" crlf)
+   (printout t "  (fast - меньше 15 минут" crlf)
+   (printout t "   normal - 15-30 минут" crlf)
+   (printout t "   long - больше 30 минут)" crlf)
+   (printout t "> ")
+   (bind ?a (read))
+   (if (or (eq ?a fast) (eq ?a normal) (eq ?a long)) then
+      (assert (answer (qname fall_asleep) (value ?a)))
+   else
+      (printout t "Пожалуйста, введите fast, normal или long" crlf)
+      (assert (answer (qname fall_asleep) (value unknown)))
+   )
+)
+
+(defrule ask-night-wakeup
+   (answer (qname fall_asleep))
+   (not (answer (qname night_wake)))
+   =>
+   (printout t "Просыпаетесь ли вы ночью? (yes/no): ")
+   (bind ?a (read))
+   (if (or (eq ?a yes) (eq ?a no)) then
+      (assert (answer (qname night_wake) (value ?a)))
+   else
+      (printout t "Введите yes или no" crlf)
+      (assert (answer (qname night_wake) (value unknown)))
+   )
+)
+
+(defrule ask-coffee-late
+   (answer (qname night_wake))
+   (not (answer (qname coffee_after_16)))
+   =>
+   (printout t "Пьете ли вы кофе или чай после 16:00? (yes/no): ")
+   (bind ?a (read))
+   (if (or (eq ?a yes) (eq ?a no)) then
+      (assert (answer (qname coffee_after_16) (value ?a)))
+   else
+      (printout t "Введите yes или no" crlf)
+      (assert (answer (qname coffee_after_16) (value unknown)))
+   )
+)
+
+(defrule ask-phone-before-sleep
+   (answer (qname coffee_after_16))
+   (not (answer (qname phone_before_sleep)))
+   =>
+   (printout t "Смотрите ли вы в телефон/планшет/ноутбук перед сном?" crlf)
+   (printout t "  (often - каждый день" crlf)
+   (printout t "   sometimes - иногда" crlf)
+   (printout t "   never - никогда)" crlf)
+   (printout t "> ")
+   (bind ?a (read))
+   (if (or (eq ?a often) (eq ?a sometimes) (eq ?a never)) then
+      (assert (answer (qname phone_before_sleep) (value ?a)))
+   else
+      (printout t "Пожалуйста, введите often, sometimes или never" crlf)
+      (assert (answer (qname phone_before_sleep) (value unknown)))
+   )
+)
+
+(defrule ask-stress
+   (answer (qname phone_before_sleep))
+   (not (answer (qname stress)))
+   =>
+   (printout t "Чувствуете ли вы сильный стресс на работе или в учебе?" crlf)
+   (printout t "  (high - сильный стресс" crlf)
+   (printout t "   medium - умеренный" crlf)
+   (printout t "   low - слабый или нет)" crlf)
+   (printout t "> ")
+   (bind ?a (read))
+   (if (or (eq ?a high) (eq ?a medium) (eq ?a low)) then
+      (assert (answer (qname stress) (value ?a)))
+   else
+      (printout t "Пожалуйста, введите high, medium или low" crlf)
+      (assert (answer (qname stress) (value unknown)))
+   )
+)
+
+(defrule ask-morning-tired
+   (answer (qname stress))
+   (not (answer (qname morning_tired)))
+   =>
+   (printout t "Чувствуете ли вы усталость после пробуждения?" crlf)
+   (printout t "  (often - часто" crlf)
+   (printout t "   sometimes - иногда" crlf)
+   (printout t "   rarely - редко)" crlf)
+   (printout t "> ")
+   (bind ?a (read))
+   (if (or (eq ?a often) (eq ?a sometimes) (eq ?a rarely)) then
+      (assert (answer (qname morning_tired) (value ?a)))
+   else
+      (printout t "Пожалуйста, введите often, sometimes или rarely" crlf)
+      (assert (answer (qname morning_tired) (value unknown)))
+   )
+)
+
+(defrule ask-snoring
+   (answer (qname morning_tired))
+   (not (answer (qname snoring)))
+   =>
+   (printout t "Храпите ли вы? (yes/no/unknown - не знаю): ")
+   (bind ?a (read))
+   (if (or (eq ?a yes) (eq ?a no) (eq ?a unknown)) then
+      (assert (answer (qname snoring) (value ?a)))
+   else
+      (printout t "Введите yes, no или unknown" crlf)
+      (assert (answer (qname snoring) (value unknown)))
+   )
+)
+
+(defrule ask-leg-movement
+   (answer (qname snoring))
+   (not (answer (qname leg_movement)))
+   =>
+   (printout t "Беспокоят ли вас непроизвольные движения ног (особенно вечером)? (yes/no): ")
+   (bind ?a (read))
+   (if (or (eq ?a yes) (eq ?a no)) then
+      (assert (answer (qname leg_movement) (value ?a)))
+   else
+      (printout t "Введите yes или no" crlf)
+      (assert (answer (qname leg_movement) (value unknown)))
+   )
+)
+
+;; ============================================
+;; ДИАГНОСТИЧЕСКИЕ ПРАВИЛА
+;; ============================================
+
+;; Диагноз 1: Бессонница
+(defrule result-insomnia
+   (answer (qname fall_asleep) (value long))
+   (answer (qname night_wake) (value yes))
+   (answer (qname morning_tired) (value often))
+   (not (result))
+   =>
+   (assert (result (type "БЕССОННИЦА")
+                   (description "Вам трудно заснуть и/или вы часто просыпаетесь ночью")
+                   (advice "Обратитесь к врачу-сомнологу. Попробуйте когнитивно-поведенческую терапию бессонницы. Избегайте кофеина после обеда, создайте ритуал отхода ко сну.")))
+)
+
+;; Диагноз 2: Плохая гигиена сна (телефон + кофе)
+(defrule result-bad-hygiene
+   (answer (qname phone_before_sleep) (value often))
+   (answer (qname coffee_after_16) (value yes))
+   (not (result))
+   =>
+   (assert (result (type "ПЛОХАЯ ГИГИЕНА СНА")
+                   (description "Ваши привычки мешают здоровому сну")
+                   (advice "Откажитесь от гаджетов за 1-2 часа до сна. Не пейте кофеин после 16:00. Затемняйте комнату. Ложитесь в одно и то же время.")))
+)
+
+;; Диагноз 3: Стрессовая бессонница
+(defrule result-stress-insomnia
+   (answer (qname stress) (value high))
+   (answer (qname fall_asleep) (value long))
+   (not (result))
+   =>
+   (assert (result (type "СТРЕССОВАЯ БЕССОННИЦА")
+                   (description "Высокий уровень стресса мешает засыпанию")
+                   (advice "Практикуйте медитацию или дыхательные упражнения перед сном. Ведите дневник стресса. Рассмотрите терапию у психолога.")))
+)
+
+;; Диагноз 4: Апноэ сна (храп + усталость утром)
+(defrule result-apnea
+   (answer (qname snoring) (value yes))
+   (answer (qname morning_tired) (value often))
+   (not (result))
+   =>
+   (assert (result (type "СИНДРОМ ОБСТРУКТИВНОГО АПНОЭ СНА")
+                   (description "Остановки дыхания во сне из-за сужения дыхательных путей")
+                   (advice "Это серьезное состояние! Обратитесь к сомнологу. Пройдите полисомнографию. Часто помогает CPAP-терапия или снижение веса.")))
+)
+
+;; Диагноз 5: Синдром беспокойных ног
+(defrule result-rls
+   (answer (qname leg_movement) (value yes))
+   (answer (qname fall_asleep) (value long))
+   (not (result))
+   =>
+   (assert (result (type "СИНДРОМ БЕСПОКОЙНЫХ НОГ")
+                   (description "Неприятные ощущения в ногах, заставляющие ими шевелить")
+                   (advice "Проверьте уровень ферритина в крови. Помогают теплые ванны, легкий массаж ног перед сном. Некоторым помогает магний.")))
+)
+
+;; Диагноз 6: Нарушение циркадного ритма (сова)
+(defrule result-circadian
+   (answer (qname phone_before_sleep) (value often))
+   (answer (qname morning_tired) (value often))
+   (answer (qname stress) (value low))
+   (not (result))
+   =>
+   (assert (result (type "НАРУШЕНИЕ ЦИРКАДНОГО РИТМА")
+                   (description "Ваш внутренний часовой механизм сбился")
+                   (advice "Используйте яркий свет утром, избегайте синего света вечером. Принимайте мелатонин за 1-2 часа до желаемого времени сна. Соблюдайте режим даже в выходные.")))
+)
+
+;; Диагноз 7: Ночные кошмары
+(defrule result-nightmares
+   (answer (qname night_wake) (value yes))
+   (answer (qname stress) (value high))
+   (answer (qname fall_asleep) (value normal))
+   (not (result))
+
+
+=>
+   (assert (result (type "НОЧНЫЕ КОШМАРЫ")
+                   (description "Тревожные сны, вызывающие пробуждение")
+                   (advice "Работа с психотерапевтом может помочь. Практикуйте упражнения на перезапись сценария сна. Снижайте общий уровень стресса.")))
+)
+
+;; Диагноз 8: Недостаток сна (поведенческий)
+(defrule result-sleep-deprivation
+   (answer (qname morning_tired) (value often))
+   (answer (qname stress) (value medium))
+   (answer (qname night_wake) (value no))
+   (answer (qname leg_movement) (value no))
+   (not (result))
+   =>
+   (assert (result (type "ХРОНИЧЕСКИЙ НЕДОСЫП")
+                   (description "Вы просто мало спите или качество сна низкое")
+                   (advice "Спите не менее 7-8 часов. Уберите все источники света и шума. Проветривайте комнату перед сном. Не ешьте тяжелую пищу на ночь.")))
+)
+
+;; Диагноз 9: Всё в порядке
+(defrule result-normal
+   (answer (qname fall_asleep) (value fast))
+   (answer (qname night_wake) (value no))
+   (answer (qname morning_tired) (value rarely))
+   (answer (qname stress) (value low))
+   (answer (qname snoring) (value no))
+   (answer (qname leg_movement) (value no))
+   (not (result))
+   =>
+   (assert (result (type "НОРМА")
+                   (description "Ваш сон в порядке!")
+                   (advice "Продолжайте в том же духе! Помните о гигиене сна и старайтесь сохранять режим.")))
+)
+
+;; Диагноз 10: По умолчанию
+(defrule result-default
+   (not (result))
+   =>
+   (assert (result (type "ТРЕБУЕТСЯ ОБСЛЕДОВАНИЕ")
+                   (description "По вашим симптомам нужна консультация специалиста")
+                   (advice "Запишитесь к терапевту или сомнологу. Возможно, потребуется полисомнография — ночное исследование сна.")))
+)
+
+;; ============================================
+;; ВЫВОД РЕЗУЛЬТАТА
+;; ============================================
+
+(defrule show-result
+   (result (type ?t) (description ?d) (advice ?a))
+   =>
+   (printout t crlf "========================================" crlf)
+   (printout t "ДИАГНОЗ: " ?t crlf)
+   (printout t "----------------------------------------" crlf)
+   (printout t "Описание: " ?d crlf)
+   (printout t "----------------------------------------" crlf)
+   (printout t "Рекомендация: " ?a crlf)
+   (printout t "========================================" crlf crlf)
+   (printout t "Диагностика завершена." crlf)
+   (halt)
+)
