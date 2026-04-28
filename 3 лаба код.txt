@@ -1,30 +1,60 @@
-% КЛАССИФИКАЦИЯ: здоров или болен?
+dna_symbol('A').
+dna_symbol('T').
+dna_symbol('G').
+dna_symbol('C').
 
-% ПРАВИЛО 1: если температура меньше 37, то человек здоров
-zdorov(Temperature) :-
-    Temperature < 37.
+rna_symbol('A').
+rna_symbol('U').
+rna_symbol('G').
+rna_symbol('C').
 
-% ПРАВИЛО 2: если температура 37 или выше, то человек болен
-bolen(Temperature) :-
-    Temperature >= 37.
+is_dna([]).
+is_dna([H|T]) :-
+    dna_symbol(H),
+    is_dna(T).
 
-% ПРОВЕРКА ДЛЯ ОДНОГО ЧЕЛОВЕКА
-proverka(Temperature) :-
-    zdorov(Temperature),
-    write('Здоров'), nl.
-proverka(Temperature) :-
-    bolen(Temperature),
-    write('Болен'), nl.
+is_rna([]).
+is_rna([H|T]) :-
+    rna_symbol(H),
+    is_rna(T).
 
-% ПРОВЕРКА НЕСКОЛЬКИХ ПАЦИЕНТОВ
-vse :-
-    write('Пациент 1 (36.5): '), proverka(36.5),
-    write('Пациент 2 (37.0): '), proverka(37.0),
-    write('Пациент 3 (38.2): '), proverka(38.2).
-% ? ЗАПРОСЫ
-% ?- zdorov(36.5).  
-% ?- zdorov(37.5).        
-% ?- bolen(38.0).         
-% ?- proverka(36.0).      
-% ?- proverka(39.0).     
-% ?- vse.                 
+classify(Seq, dna) :-
+    is_dna(Seq), !.
+classify(Seq, rna) :-
+    is_rna(Seq), !.
+classify(_, unknown).
+
+count_char(_, [], 0).
+count_char(X, [X|T], N) :-
+    count_char(X, T, N1),
+    N is N1 + 1.
+count_char(X, [Y|T], N) :-
+    X \= Y,
+    count_char(X, T, N).
+
+gc_content(Seq, GC_percent) :-
+    length(Seq, Len),
+    Len > 0,
+    count_char('G', Seq, G),
+    count_char('C', Seq, C),
+    GC is G + C,
+    GC_percent is (GC * 100) / Len.
+
+analyze_sequence(Seq) :-
+    classify(Seq, Type),
+    length(Seq, Len),
+    format("Тип: ~w~n", [Type]),
+    format("Длина: ~d~n", [Len]),
+    (Type == dna -> 
+        gc_content(Seq, GC),
+        format("GC-состав: ~2f%~n", [GC])
+    ; 
+        format("Для РНК GC-состав не считается~n")).
+
+string_to_seq(String, Seq) :-
+    string_chars(String, Seq).
+
+
+analyze(String) :-
+    string_to_seq(String, Seq),
+    analyze_sequence(Seq).
